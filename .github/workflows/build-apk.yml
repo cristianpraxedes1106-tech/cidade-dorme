@@ -34,10 +34,10 @@ jobs:
 
       - run: npm install
 
-      - name: Prepare app icon
+      - name: Prepare Capacitor assets
         run: |
-          mkdir -p assets
-          magick assets/appIcon.jpg -resize 1024x1024^ -gravity center -extent 1024x1024 assets/icon.png
+          mkdir -p resources
+          cp assets/appIcon.jpg resources/icon.jpg
 
       - name: Add Android platform
         run: npx cap add android
