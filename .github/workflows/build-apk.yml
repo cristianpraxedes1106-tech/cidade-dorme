@@ -3,27 +3,55 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+
 jobs:
   android:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
-      - uses: android-actions/setup-android@v3
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+
+      - name: Install Android build packages
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+
       - run: npm install
-      - run: npx cap add android
-      - run: npx cap sync android
+
+      - name: Prepare app icon
+        run: |
+          mkdir -p assets
+          magick assets/appIcon.jpg -resize 1024x1024^ -gravity center -extent 1024x1024 assets/icon.png
+
+      - name: Add Android platform
+        run: npx cap add android
+
+      - name: Generate Android app icon
+        run: npx @capacitor/assets@3.0.5 generate --android --iconBackgroundColor "#171329" --iconBackgroundColorDark "#171329"
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
       - name: Build debug APK
         working-directory: android
         run: ./gradlew assembleDebug
+
       - uses: actions/upload-artifact@v4
         with:
           name: cidade-dorme-apk
