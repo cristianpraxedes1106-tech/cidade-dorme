@@ -1,7 +1,9 @@
 name: Build APK
+
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -11,30 +13,38 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
-        with:
-          packages: 'platform-tools'
 
-      - name: Install Android build packages
+      - name: Install Android SDK packages
         run: |
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: '22'
+          cache: npm
 
-      - run: npm install
+      - name: Install dependencies
+        run: npm install
 
-      - name: Prepare Capacitor assets
+      - name: Prepare web files
+        run: |
+          rm -rf www
+          mkdir -p www
+          rsync -a             --exclude='www'             --exclude='node_modules'             --exclude='android'             --exclude='.git'             --exclude='.github'             ./ www/
+
+      - name: Prepare app icon
         run: |
           mkdir -p resources
           cp assets/appIcon.jpg resources/icon.jpg
@@ -42,17 +52,24 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
-      - name: Generate Android app icon
-        run: npx @capacitor/assets@3.0.5 generate --android --iconBackgroundColor "#171329" --iconBackgroundColorDark "#171329"
+      - name: Generate Android icon
+        run: |
+          npx @capacitor/assets@3.0.5 generate             --android             --iconBackgroundColor "#171329"             --iconBackgroundColorDark "#171329"
 
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Build debug APK
-        working-directory: android
-        run: ./gradlew assembleDebug
+      - name: Make Gradle executable
+        run: chmod +x android/gradlew
 
-      - uses: actions/upload-artifact@v4
+      - name: Build APK
+        working-directory: android
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
           name: cidade-dorme-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
