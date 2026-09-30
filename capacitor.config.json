@@ -1,1 +1,6 @@
-{"appId":"com.cidadedorme.game","appName":"Cidade Dorme","webDir":".","bundledWebRuntime":false}
+{
+  "appId": "com.cidadedorme.game",
+  "appName": "Cidade Dorme",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
