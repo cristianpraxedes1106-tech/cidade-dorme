@@ -1,0 +1,1 @@
+{"name":"cidade-dorme","version":"0.1.0","private":true,"scripts":{"build":"echo web-ready"},"dependencies":{"@capacitor/core":"^8.0.0"},"devDependencies":{"@capacitor/cli":"^8.0.0","@capacitor/android":"^8.0.0"}}
